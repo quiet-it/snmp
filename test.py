@@ -1,4 +1,4 @@
-import os
+import os, subprocess
 
 
 subnet = '10.31.109.'
@@ -13,15 +13,38 @@ def get_info(host):
 
     return info
 
-def ping(host):
-    ping = os.system('ping -v -c 1 ' + subnet + str(x))
-    if ping == 0:
-        print("Host " + subnet + str(x) + ' is online')
-    else:
-        print("Host " + subnet + str(x) + ' is offline')
-# print(get_info('10.31.101.200'))
+def host_type(type,location):
+    sites = {
+        'saratoga' : '10.21.',
+        'barnum' : '10.31.',
+        'jackson' : '10.31.'
+    }
+    subnet = {
+        'pc' : '8',
+        'printer' : '9',
+        'z_printer' : '10'
+    }
 
-x = 1
-while x < 255:
-    x+=1
-    ping(x)
+    if location == 'jackson':
+        subnet = {
+            'pc' : '108',
+            'printer' : '109',
+            'z_printer' : '110'
+        }
+    return str(sites[location]) + str(subnet[type]) + '.{}'
+
+def lookup(addr):
+     try:
+         return socket.gethostbyaddr(addr)
+     except socket.herror:
+         return None, None, None
+
+with open(os.devnull, "wb") as limbo:
+        for n in range(1, 254):
+                ip=host_type('printer', 'jackson').format(n)
+                result=subprocess.Popen(["ping", "-c", "1", "-n", "-W", "2", ip],
+                        stdout=limbo, stderr=limbo).wait()
+                if result:
+                        print(ip, "inactive")
+                else:
+                        print(ip, "active")
